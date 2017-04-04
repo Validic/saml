@@ -1,0 +1,25 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "uER+H+ibactPLiEf8TCHbQNRANw=",
+			"path": "github.com/crewjam/errset",
+			"revision": "f78d65de925cf59a953184a376cbfe07cfe65e3d",
+			"revisionTime": "2016-02-19T15:37:00Z"
+		},
+		{
+			"checksumSHA1": "OvUURYs4zOTqGPNfruQpcAfffUc=",
+			"path": "github.com/crewjam/go-xmlsec",
+			"revision": "1aa2f9374afac12f9864ced5babe8ff74427eed2",
+			"revisionTime": "2017-01-16T13:20:12Z"
+		},
+		{
+			"checksumSHA1": "2Fy1Y6Z3lRRX1891WF/+HT4XS2I=",
+			"path": "github.com/dgrijalva/jwt-go",
+			"revision": "2268707a8f0843315e2004ee4f1d021dc08baedf",
+			"revisionTime": "2017-02-01T22:58:49Z"
+		}
+	],
+	"rootPath": "github.com/Validic/saml"
+}
