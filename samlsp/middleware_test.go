@@ -377,7 +377,7 @@ func (test *MiddlewareTest) TestCanParseResponse(c *C) {
 	test.Middleware.ServeHTTP(resp, req)
 	c.Assert(resp.Code, Equals, http.StatusFound)
 
-	c.Assert(resp.Header().Get("Location"), Equals, "/frob")
+	c.Assert(resp.Header().Get("Location"), Matches, "\\/frob\\?name_id=[_0-9a-z]*&session_index=[_0-9a-z]*")
 	c.Assert(resp.Header()["Set-Cookie"], DeepEquals, []string{
 		"saml_KCosLjAyNDY4Ojw-QEJERkhKTE5QUlRWWFpcXmBiZGZoamxucHJ0dnh6=",
 		"ttt=" + expectedToken + "; " +

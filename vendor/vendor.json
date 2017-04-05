@@ -15,10 +15,88 @@
 			"revisionTime": "2017-01-16T13:20:12Z"
 		},
 		{
+			"checksumSHA1": "pXA0VXOMBMY18/4WFJjqnsT51jo=",
+			"path": "github.com/dchest/uniuri",
+			"revision": "8902c56451e9b58ff940bbe5fec35d5f9c04584a",
+			"revisionTime": "2016-02-12T16:43:26Z"
+		},
+		{
 			"checksumSHA1": "2Fy1Y6Z3lRRX1891WF/+HT4XS2I=",
 			"path": "github.com/dgrijalva/jwt-go",
 			"revision": "2268707a8f0843315e2004ee4f1d021dc08baedf",
 			"revisionTime": "2017-02-01T22:58:49Z"
+		},
+		{
+			"checksumSHA1": "eOXF2PEvYLMeD8DSzLZJWbjYzco=",
+			"path": "github.com/kr/pretty",
+			"revision": "cfb55aafdaf3ec08f0db22699ab822c50091b1c4",
+			"revisionTime": "2016-08-23T17:07:15Z"
+		},
+		{
+			"checksumSHA1": "uulQHQ7IsRKqDudBC8Go9J0gtAc=",
+			"path": "github.com/kr/text",
+			"revision": "7cafcd837844e784b526369c9bce262804aebc60",
+			"revisionTime": "2016-05-04T02:26:26Z"
+		},
+		{
+			"checksumSHA1": "a3MwvEHFIkfvx/fRcE2eDni9Fdw=",
+			"path": "github.com/zenazn/goji",
+			"revision": "4d7077956293261309684d3cf1af673f773c6819",
+			"revisionTime": "2016-08-23T03:05:49Z"
+		},
+		{
+			"checksumSHA1": "RABh3uU3DiTqwRACwdnGdp5mrjU=",
+			"path": "github.com/zenazn/goji/bind",
+			"revision": "4d7077956293261309684d3cf1af673f773c6819",
+			"revisionTime": "2016-08-23T03:05:49Z"
+		},
+		{
+			"checksumSHA1": "VlmqBl1j3cULPU18lMBXNf+IHY8=",
+			"path": "github.com/zenazn/goji/graceful",
+			"revision": "4d7077956293261309684d3cf1af673f773c6819",
+			"revisionTime": "2016-08-23T03:05:49Z"
+		},
+		{
+			"checksumSHA1": "caN0mgXEzfd0w9rhUsppkUUUCns=",
+			"path": "github.com/zenazn/goji/graceful/listener",
+			"revision": "4d7077956293261309684d3cf1af673f773c6819",
+			"revisionTime": "2016-08-23T03:05:49Z"
+		},
+		{
+			"checksumSHA1": "2D1oFW10TM4Rhvza5qwyZ1F39ZI=",
+			"path": "github.com/zenazn/goji/web",
+			"revision": "4d7077956293261309684d3cf1af673f773c6819",
+			"revisionTime": "2016-08-23T03:05:49Z"
+		},
+		{
+			"checksumSHA1": "6rHgrhLBfPQ8+CZwH0tnVV8843k=",
+			"path": "github.com/zenazn/goji/web/middleware",
+			"revision": "4d7077956293261309684d3cf1af673f773c6819",
+			"revisionTime": "2016-08-23T03:05:49Z"
+		},
+		{
+			"checksumSHA1": "g9hmnkrmD9/3bVFYssjA1mu+r2o=",
+			"path": "github.com/zenazn/goji/web/mutil",
+			"revision": "4d7077956293261309684d3cf1af673f773c6819",
+			"revisionTime": "2016-08-23T03:05:49Z"
+		},
+		{
+			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",
+			"path": "golang.org/x/crypto/bcrypt",
+			"revision": "c78caca803c95773f48a844d3dcab04b9bc4d6dd",
+			"revisionTime": "2017-04-04T15:27:40Z"
+		},
+		{
+			"checksumSHA1": "JsJdKXhz87gWenMwBeejTOeNE7k=",
+			"path": "golang.org/x/crypto/blowfish",
+			"revision": "c78caca803c95773f48a844d3dcab04b9bc4d6dd",
+			"revisionTime": "2017-04-04T15:27:40Z"
+		},
+		{
+			"checksumSHA1": "CEFTYXtWmgSh+3Ik1NmDaJcz4E0=",
+			"path": "gopkg.in/check.v1",
+			"revision": "20d25e2804050c1cd24a7eea1e7a6447dd0e74ec",
+			"revisionTime": "2016-12-08T18:13:25Z"
 		}
 	],
 	"rootPath": "github.com/Validic/saml"

@@ -255,6 +255,7 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 			claims.StandardClaims.Subject = nameID.Value
 		}
 	}
+
 	if assertion.AttributeStatement != nil {
 		claims.Attributes = map[string][]string{}
 		for _, attr := range assertion.AttributeStatement.Attributes {
@@ -281,7 +282,14 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 		Path:     "/",
 	})
 
-	http.Redirect(w, r, redirectURI, http.StatusFound)
+	// - TODO: see if can be done more cleanly
+	rURI := url.URL{}
+	rURI.Path = redirectURI
+
+	rURI.RawQuery = fmt.Sprintf("name_id=%s&session_index=%s",
+		assertion.Subject.NameID.Value,
+		assertion.AuthnStatement.SessionIndex)
+	http.Redirect(w, r, rURI.RequestURI(), http.StatusFound)
 }
 
 // IsAuthorized is invoked by RequireAccount to determine if the request
