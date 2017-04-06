@@ -293,7 +293,6 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 		Path:     "/",
 	})
 
-	// Example: this will give us a 44 byte, base64 encoded output
 	token, err := generateRandomString(32)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -399,7 +398,6 @@ func RequireAttribute(name, value string) func(http.Handler) http.Handler {
 func generateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
-	// Note that err == nil only if we read len(b) bytes.
 	if err != nil {
 		return nil, err
 	}
