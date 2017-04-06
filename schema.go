@@ -390,3 +390,8 @@ type AttributeValue struct {
 	Value  string `xml:",chardata"`
 	NameID *NameID
 }
+
+type SessionStore interface {
+	Set(key string, assertion Assertion)
+	Get(key string) Assertion
+}
