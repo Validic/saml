@@ -255,6 +255,7 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 	}
 
 	now := saml.TimeNow()
+	//TODO - are these used subsequently, or can this be ignored?
 	claims := TokenClaims{}
 	claims.Audience = m.ServiceProvider.Metadata().EntityID
 	claims.IssuedAt = assertion.IssueInstant.Unix()
@@ -323,6 +324,7 @@ func (m *Middleware) IsAuthorized(r *http.Request) bool {
 		return false
 	}
 
+	//TODO look up my Assertion in the session store based on cookie value, instead of parsing from a JWT cookie
 	tokenClaims := TokenClaims{}
 	token, err := jwt.ParseWithClaims(cookie.Value, &tokenClaims, func(t *jwt.Token) (interface{}, error) {
 		secretBlock, _ := pem.Decode([]byte(m.ServiceProvider.Key))
@@ -350,6 +352,11 @@ func (m *Middleware) IsAuthorized(r *http.Request) bool {
 		}
 	}
 
+	/*
+		TODO given the assertion we pulled from Session above, iterate over assertion.AttributeStatement.Attributes
+		assertion := saml.Assertion{}
+		assertion.AttributeStatement.Attributes
+	*/
 	for claimName, claimValues := range tokenClaims.Attributes {
 		for _, claimValue := range claimValues {
 			r.Header.Add("X-Saml-"+claimName, claimValue)
