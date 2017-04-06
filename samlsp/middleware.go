@@ -1,6 +1,7 @@
 package samlsp
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/pem"
 	"encoding/xml"
@@ -71,7 +72,7 @@ func randomBytes(n int) []byte {
 // ServeHTTP implements http.Handler and serves the SAML-specific HTTP endpoints
 // on the URIs specified by m.ServiceProvider.MetadataURL and
 // m.ServiceProvider.AcsURL.
-func (m *Middleware) serveHTTP(w http.ResponseWriter, r *http.Request, assertChan chan saml.Assertion) {
+func (m *Middleware) serveHTTP(w http.ResponseWriter, r *http.Request, sessionStore saml.SessionStore) {
 	metadataURL, _ := url.Parse(m.ServiceProvider.MetadataURL)
 	if r.URL.Path == metadataURL.Path {
 		buf, _ := xml.MarshalIndent(m.ServiceProvider.Metadata(), "", "  ")
@@ -93,7 +94,7 @@ func (m *Middleware) serveHTTP(w http.ResponseWriter, r *http.Request, assertCha
 			return
 		}
 
-		m.Authorize(w, r, assertion, assertChan)
+		m.Authorize(w, r, assertion, sessionStore)
 		return
 	}
 
@@ -104,9 +105,9 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.serveHTTP(w, r, nil)
 }
 
-func (m *Middleware) CaptureAssertion(assertChan chan saml.Assertion) func(http.ResponseWriter, *http.Request) {
+func (m *Middleware) CaptureAssertionAndServeHTTP(sessionStore saml.SessionStore) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		m.serveHTTP(w, r, assertChan)
+		m.serveHTTP(w, r, sessionStore)
 	}
 }
 
@@ -225,7 +226,7 @@ type TokenClaims struct {
 // Authorize is invoked by ServeHTTP when we have a new, valid SAML assertion.
 // It sets a cookie that contains a signed JWT containing the assertion attributes.
 // It then redirects the user's browser to the original URL contained in RelayState.
-func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion, assertChan chan saml.Assertion) {
+func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion, sessionStore saml.SessionStore) {
 	secretBlock, _ := pem.Decode([]byte(m.ServiceProvider.Key))
 
 	redirectURI := "/"
@@ -292,18 +293,26 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 		Path:     "/",
 	})
 
-	if assertChan != nil {
-		assertChan <- *assertion
+	// Example: this will give us a 44 byte, base64 encoded output
+	token, err := generateRandomString(32)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	// - TODO: see if can be done more cleanly
-	rURI := url.URL{}
-	rURI.Path = redirectURI
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session",
+		Value:    token,
+		MaxAge:   int(m.CookieMaxAge.Seconds()),
+		HttpOnly: false,
+		Path:     "/",
+	})
 
-	rURI.RawQuery = fmt.Sprintf("name_id=%s&session_index=%s",
-		assertion.Subject.NameID.Value,
-		assertion.AuthnStatement.SessionIndex)
-	http.Redirect(w, r, rURI.RequestURI(), http.StatusFound)
+	if sessionStore != nil {
+		sessionStore.Set(token, *assertion)
+	}
+
+	http.Redirect(w, r, redirectURI, http.StatusFound)
 }
 
 // IsAuthorized is invoked by RequireAccount to determine if the request
@@ -385,4 +394,20 @@ func RequireAttribute(name, value string) func(http.Handler) http.Handler {
 		}
 		return http.HandlerFunc(fn)
 	}
+}
+
+func generateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func generateRandomString(s int) (string, error) {
+	b, err := generateRandomBytes(s)
+	return base64.URLEncoding.EncodeToString(b), err
 }
