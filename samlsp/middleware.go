@@ -71,7 +71,7 @@ func randomBytes(n int) []byte {
 // ServeHTTP implements http.Handler and serves the SAML-specific HTTP endpoints
 // on the URIs specified by m.ServiceProvider.MetadataURL and
 // m.ServiceProvider.AcsURL.
-func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *Middleware) serveHTTP(w http.ResponseWriter, r *http.Request, assertChan chan saml.Assertion) {
 	metadataURL, _ := url.Parse(m.ServiceProvider.MetadataURL)
 	if r.URL.Path == metadataURL.Path {
 		buf, _ := xml.MarshalIndent(m.ServiceProvider.Metadata(), "", "  ")
@@ -93,11 +93,21 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		m.Authorize(w, r, assertion)
+		m.Authorize(w, r, assertion, assertChan)
 		return
 	}
 
 	http.NotFoundHandler().ServeHTTP(w, r)
+}
+
+func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	m.serveHTTP(w, r, nil)
+}
+
+func (m *Middleware) CaptureAssertion(assertChan chan saml.Assertion) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m.serveHTTP(w, r, assertChan)
+	}
 }
 
 // RequireAccount is HTTP middleware that requires that each request be
@@ -215,7 +225,7 @@ type TokenClaims struct {
 // Authorize is invoked by ServeHTTP when we have a new, valid SAML assertion.
 // It sets a cookie that contains a signed JWT containing the assertion attributes.
 // It then redirects the user's browser to the original URL contained in RelayState.
-func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion) {
+func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion *saml.Assertion, assertChan chan saml.Assertion) {
 	secretBlock, _ := pem.Decode([]byte(m.ServiceProvider.Key))
 
 	redirectURI := "/"
@@ -281,6 +291,10 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 		HttpOnly: false,
 		Path:     "/",
 	})
+
+	if assertChan != nil {
+		assertChan <- *assertion
+	}
 
 	// - TODO: see if can be done more cleanly
 	rURI := url.URL{}
