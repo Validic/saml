@@ -393,7 +393,7 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 					AttributeName:    "ID",
 				}},
 			}); err != nil {
-			retErr.PrivateErr = fmt.Errorf("this here failed to verify signature on response: %s", err)
+			retErr.PrivateErr = fmt.Errorf("failed to verify signature on response: %s", err)
 			return nil, retErr
 		}
 		assertion = resp.Assertion
@@ -416,7 +416,7 @@ func (sp *ServiceProvider) ParseResponse(req *http.Request, possibleRequestIDs [
 					AttributeName:    "ID",
 				}},
 			}); err != nil {
-			retErr.PrivateErr = fmt.Errorf("that failed to verify signature on response: %s", err)
+			retErr.PrivateErr = fmt.Errorf("failed to verify signature on response: %s", err)
 			return nil, retErr
 		}
 
