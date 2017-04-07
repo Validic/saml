@@ -340,7 +340,8 @@ func (test *MiddlewareTest) TestRequireAttributeNotPresent(c *C) {
 	req, _ := http.NewRequest("GET", "/frob", nil)
 	req.Header.Set("Cookie", ""+
 		"ttt="+expectedToken+"; "+
-		"Path=/; Max-Age=7200")
+		"Path=/; Max-Age=7200; "+
+		"session=asfdlkj2lrkj23")
 	resp := httptest.NewRecorder()
 	handler.ServeHTTP(resp, req)
 
@@ -377,12 +378,11 @@ func (test *MiddlewareTest) TestCanParseResponse(c *C) {
 	test.Middleware.ServeHTTP(resp, req)
 	c.Assert(resp.Code, Equals, http.StatusFound)
 
-	c.Assert(resp.Header().Get("Location"), Matches, "\\/frob\\?name_id=[_0-9a-z]*&session_index=[_0-9a-z]*")
-	c.Assert(resp.Header()["Set-Cookie"], DeepEquals, []string{
-		"saml_KCosLjAyNDY4Ojw-QEJERkhKTE5QUlRWWFpcXmBiZGZoamxucHJ0dnh6=",
-		"ttt=" + expectedToken + "; " +
-			"Path=/; Max-Age=7200",
-	})
+	c.Assert(resp.Header().Get("Location"), Equals, "/frob")
+	cookieHeaders := resp.Header()["Set-Cookie"]
+	c.Assert(cookieHeaders[0], Equals, "saml_KCosLjAyNDY4Ojw-QEJERkhKTE5QUlRWWFpcXmBiZGZoamxucHJ0dnh6=")
+	c.Assert(cookieHeaders[1], Equals, "ttt="+expectedToken+"; "+"Path=/; Max-Age=7200")
+	c.Assert(cookieHeaders[2], Matches, "session=(.)*; Path=\\/; Max-Age=7200")
 }
 
 func (test *MiddlewareTest) TestRejectsInvalidRelayState(c *C) {
