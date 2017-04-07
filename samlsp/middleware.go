@@ -56,6 +56,7 @@ type Middleware struct {
 	AllowIDPInitiated bool
 	CookieName        string
 	CookieMaxAge      time.Duration
+	SessionStore      saml.SessionStore
 }
 
 const defaultCookieMaxAge = time.Hour
@@ -72,7 +73,7 @@ func randomBytes(n int) []byte {
 // ServeHTTP implements http.Handler and serves the SAML-specific HTTP endpoints
 // on the URIs specified by m.ServiceProvider.MetadataURL and
 // m.ServiceProvider.AcsURL.
-func (m *Middleware) serveHTTP(w http.ResponseWriter, r *http.Request, sessionStore saml.SessionStore) {
+func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	metadataURL, _ := url.Parse(m.ServiceProvider.MetadataURL)
 	if r.URL.Path == metadataURL.Path {
 		buf, _ := xml.MarshalIndent(m.ServiceProvider.Metadata(), "", "  ")
@@ -94,12 +95,14 @@ func (m *Middleware) serveHTTP(w http.ResponseWriter, r *http.Request, sessionSt
 			return
 		}
 
-		m.Authorize(w, r, assertion, sessionStore)
+		m.Authorize(w, r, assertion, m.SessionStore)
 		return
 	}
 
 	http.NotFoundHandler().ServeHTTP(w, r)
 }
+
+/*
 
 func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.serveHTTP(w, r, nil)
@@ -110,6 +113,7 @@ func (m *Middleware) CaptureAssertionAndServeHTTP(sessionStore saml.SessionStore
 		m.serveHTTP(w, r, sessionStore)
 	}
 }
+*/
 
 // RequireAccount is HTTP middleware that requires that each request be
 // associated with a valid session. If the request is not associated with a valid

@@ -21,6 +21,7 @@ type Options struct {
 	AllowIDPInitiated bool
 	IDPMetadata       *saml.Metadata
 	IDPMetadataURL    string
+	SessionStore      saml.SessionStore
 }
 
 // New creates a new Middleware
@@ -36,6 +37,7 @@ func New(opts Options) (*Middleware, error) {
 		AllowIDPInitiated: opts.AllowIDPInitiated,
 		CookieName:        defaultCookieName,
 		CookieMaxAge:      defaultCookieMaxAge,
+		SessionStore:      opts.SessionStore,
 	}
 
 	// fetch the IDP metadata if needed.
