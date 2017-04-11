@@ -3,6 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
+			"path": "all",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "uER+H+ibactPLiEf8TCHbQNRANw=",
 			"path": "github.com/crewjam/errset",
 			"revision": "f78d65de925cf59a953184a376cbfe07cfe65e3d",

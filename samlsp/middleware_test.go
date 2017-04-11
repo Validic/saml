@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -61,6 +62,159 @@ func (test *MiddlewareTest) SetUpTest(c *C) {
 	test.Certificate = "-----BEGIN CERTIFICATE-----\nMIIB7zCCAVgCCQDFzbKIp7b3MTANBgkqhkiG9w0BAQUFADA8MQswCQYDVQQGEwJV\nUzELMAkGA1UECAwCR0ExDDAKBgNVBAoMA2ZvbzESMBAGA1UEAwwJbG9jYWxob3N0\nMB4XDTEzMTAwMjAwMDg1MVoXDTE0MTAwMjAwMDg1MVowPDELMAkGA1UEBhMCVVMx\nCzAJBgNVBAgMAkdBMQwwCgYDVQQKDANmb28xEjAQBgNVBAMMCWxvY2FsaG9zdDCB\nnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA1PMHYmhZj308kWLhZVT4vOulqx/9\nibm5B86fPWwUKKQ2i12MYtz07tzukPymisTDhQaqyJ8Kqb/6JjhmeMnEOdTvSPmH\nO8m1ZVveJU6NoKRn/mP/BD7FW52WhbrUXLSeHVSKfWkNk6S4hk9MV9TswTvyRIKv\nRsw0X/gfnqkroJcCAwEAATANBgkqhkiG9w0BAQUFAAOBgQCMMlIO+GNcGekevKgk\nakpMdAqJfs24maGb90DvTLbRZRD7Xvn1MnVBBS9hzlXiFLYOInXACMW5gcoRFfeT\nQLSouMM8o57h0uKjfTmuoWHLQLi6hnF+cvCsEFiJZ4AbF+DgmO6TarJ8O05t8zvn\nOwJlNCASPZRH/JmF8tX0hoHuAQ==\n-----END CERTIFICATE-----\n"
 	test.IDPMetadata = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<EntityDescriptor xmlns=\"urn:oasis:names:tc:SAML:2.0:metadata\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:mdalg=\"urn:oasis:names:tc:SAML:metadata:algsupport\" xmlns:mdui=\"urn:oasis:names:tc:SAML:metadata:ui\" xmlns:shibmd=\"urn:mace:shibboleth:metadata:1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" Name=\"urn:mace:shibboleth:testshib:two\" entityID=\"https://idp.testshib.org/idp/shibboleth\">\n\t<Extensions>\n\t\t<mdalg:DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha512\" />\n\t\t<mdalg:DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#sha384\" />\n\t\t<mdalg:DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#sha256\" />\n\t\t<mdalg:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#sha1\" />\n\t\t<mdalg:SigningMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha512\" />\n\t\t<mdalg:SigningMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha384\" />\n\t\t<mdalg:SigningMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-sha256\" />\n\t\t<mdalg:SigningMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#rsa-sha1\" />\n\t</Extensions>\n\t<IDPSSODescriptor protocolSupportEnumeration=\"urn:oasis:names:tc:SAML:1.1:protocol urn:mace:shibboleth:1.0 urn:oasis:names:tc:SAML:2.0:protocol\">\n\t\t<Extensions>\n\t\t\t<shibmd:Scope regexp=\"false\">testshib.org</shibmd:Scope>\n\t\t\t<mdui:UIInfo>\n\t\t\t\t<mdui:DisplayName xml:lang=\"en\">TestShib Test IdP</mdui:DisplayName>\n\t\t\t\t<mdui:Description xml:lang=\"en\">TestShib IdP. Use this as a source of attributes\n                        for your test SP.</mdui:Description>\n\t\t\t\t<mdui:Logo height=\"88\" width=\"253\">https://www.testshib.org/testshibtwo.jpg</mdui:Logo>\n\t\t\t</mdui:UIInfo>\n\t\t</Extensions>\n\t\t<KeyDescriptor>\n\t\t\t<ds:KeyInfo>\n\t\t\t\t<ds:X509Data>\n\t\t\t\t\t<ds:X509Certificate>MIIEDjCCAvagAwIBAgIBADANBgkqhkiG9w0BAQUFADBnMQswCQYDVQQGEwJVUzEV\n                            MBMGA1UECBMMUGVubnN5bHZhbmlhMRMwEQYDVQQHEwpQaXR0c2J1cmdoMREwDwYD\n                            VQQKEwhUZXN0U2hpYjEZMBcGA1UEAxMQaWRwLnRlc3RzaGliLm9yZzAeFw0wNjA4\n                            MzAyMTEyMjVaFw0xNjA4MjcyMTEyMjVaMGcxCzAJBgNVBAYTAlVTMRUwEwYDVQQI\n                            EwxQZW5uc3lsdmFuaWExEzARBgNVBAcTClBpdHRzYnVyZ2gxETAPBgNVBAoTCFRl\n                            c3RTaGliMRkwFwYDVQQDExBpZHAudGVzdHNoaWIub3JnMIIBIjANBgkqhkiG9w0B\n                            AQEFAAOCAQ8AMIIBCgKCAQEArYkCGuTmJp9eAOSGHwRJo1SNatB5ZOKqDM9ysg7C\n                            yVTDClcpu93gSP10nH4gkCZOlnESNgttg0r+MqL8tfJC6ybddEFB3YBo8PZajKSe\n                            3OQ01Ow3yT4I+Wdg1tsTpSge9gEz7SrC07EkYmHuPtd71CHiUaCWDv+xVfUQX0aT\n                            NPFmDixzUjoYzbGDrtAyCqA8f9CN2txIfJnpHE6q6CmKcoLADS4UrNPlhHSzd614\n                            kR/JYiks0K4kbRqCQF0Dv0P5Di+rEfefC6glV8ysC8dB5/9nb0yh/ojRuJGmgMWH\n                            gWk6h0ihjihqiu4jACovUZ7vVOCgSE5Ipn7OIwqd93zp2wIDAQABo4HEMIHBMB0G\n                            A1UdDgQWBBSsBQ869nh83KqZr5jArr4/7b+QazCBkQYDVR0jBIGJMIGGgBSsBQ86\n                            9nh83KqZr5jArr4/7b+Qa6FrpGkwZzELMAkGA1UEBhMCVVMxFTATBgNVBAgTDFBl\n                            bm5zeWx2YW5pYTETMBEGA1UEBxMKUGl0dHNidXJnaDERMA8GA1UEChMIVGVzdFNo\n                            aWIxGTAXBgNVBAMTEGlkcC50ZXN0c2hpYi5vcmeCAQAwDAYDVR0TBAUwAwEB/zAN\n                            BgkqhkiG9w0BAQUFAAOCAQEAjR29PhrCbk8qLN5MFfSVk98t3CT9jHZoYxd8QMRL\n                            I4j7iYQxXiGJTT1FXs1nd4Rha9un+LqTfeMMYqISdDDI6tv8iNpkOAvZZUosVkUo\n                            93pv1T0RPz35hcHHYq2yee59HJOco2bFlcsH8JBXRSRrJ3Q7Eut+z9uo80JdGNJ4\n                            /SJy5UorZ8KazGj16lfJhOBXldgrhppQBb0Nq6HKHguqmwRfJ+WkxemZXzhediAj\n                            Geka8nz8JjwxpUjAiSWYKLtJhGEaTqCYxCCX2Dw+dOTqUzHOZ7WKv4JXPK5G/Uhr\n                            8K/qhmFT2nIQi538n6rVYLeWj8Bbnl+ev0peYzxFyF5sQA==</ds:X509Certificate>\n\t\t\t\t</ds:X509Data>\n\t\t\t</ds:KeyInfo>\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#aes256-cbc\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#aes192-cbc\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#aes128-cbc\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#tripledes-cbc\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#rsa-1_5\" />\n\t\t</KeyDescriptor>\n\t\t<ArtifactResolutionService Binding=\"urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding\" Location=\"https://idp.testshib.org:8443/idp/profile/SAML1/SOAP/ArtifactResolution\" index=\"1\" />\n\t\t<ArtifactResolutionService Binding=\"urn:oasis:names:tc:SAML:2.0:bindings:SOAP\" Location=\"https://idp.testshib.org:8443/idp/profile/SAML2/SOAP/ArtifactResolution\" index=\"2\" />\n\t\t<NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>\n\t\t<NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>\n\t\t<SingleSignOnService Binding=\"urn:mace:shibboleth:1.0:profiles:AuthnRequest\" Location=\"https://idp.testshib.org/idp/profile/Shibboleth/SSO\" />\n\t\t<SingleSignOnService Binding=\"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST\" Location=\"https://idp.testshib.org/idp/profile/SAML2/POST/SSO\" />\n\t\t<SingleSignOnService Binding=\"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect\" Location=\"https://idp.testshib.org/idp/profile/SAML2/Redirect/SSO\" />\n\t\t<SingleSignOnService Binding=\"urn:oasis:names:tc:SAML:2.0:bindings:SOAP\" Location=\"https://idp.testshib.org/idp/profile/SAML2/SOAP/ECP\" />\n\t</IDPSSODescriptor>\n\t<AttributeAuthorityDescriptor protocolSupportEnumeration=\"urn:oasis:names:tc:SAML:1.1:protocol urn:oasis:names:tc:SAML:2.0:protocol\">\n\t\t<KeyDescriptor>\n\t\t\t<ds:KeyInfo>\n\t\t\t\t<ds:X509Data>\n\t\t\t\t\t<ds:X509Certificate>MIIEDjCCAvagAwIBAgIBADANBgkqhkiG9w0BAQUFADBnMQswCQYDVQQGEwJVUzEV\n                            MBMGA1UECBMMUGVubnN5bHZhbmlhMRMwEQYDVQQHEwpQaXR0c2J1cmdoMREwDwYD\n                            VQQKEwhUZXN0U2hpYjEZMBcGA1UEAxMQaWRwLnRlc3RzaGliLm9yZzAeFw0wNjA4\n                            MzAyMTEyMjVaFw0xNjA4MjcyMTEyMjVaMGcxCzAJBgNVBAYTAlVTMRUwEwYDVQQI\n                            EwxQZW5uc3lsdmFuaWExEzARBgNVBAcTClBpdHRzYnVyZ2gxETAPBgNVBAoTCFRl\n                            c3RTaGliMRkwFwYDVQQDExBpZHAudGVzdHNoaWIub3JnMIIBIjANBgkqhkiG9w0B\n                            AQEFAAOCAQ8AMIIBCgKCAQEArYkCGuTmJp9eAOSGHwRJo1SNatB5ZOKqDM9ysg7C\n                            yVTDClcpu93gSP10nH4gkCZOlnESNgttg0r+MqL8tfJC6ybddEFB3YBo8PZajKSe\n                            3OQ01Ow3yT4I+Wdg1tsTpSge9gEz7SrC07EkYmHuPtd71CHiUaCWDv+xVfUQX0aT\n                            NPFmDixzUjoYzbGDrtAyCqA8f9CN2txIfJnpHE6q6CmKcoLADS4UrNPlhHSzd614\n                            kR/JYiks0K4kbRqCQF0Dv0P5Di+rEfefC6glV8ysC8dB5/9nb0yh/ojRuJGmgMWH\n                            gWk6h0ihjihqiu4jACovUZ7vVOCgSE5Ipn7OIwqd93zp2wIDAQABo4HEMIHBMB0G\n                            A1UdDgQWBBSsBQ869nh83KqZr5jArr4/7b+QazCBkQYDVR0jBIGJMIGGgBSsBQ86\n                            9nh83KqZr5jArr4/7b+Qa6FrpGkwZzELMAkGA1UEBhMCVVMxFTATBgNVBAgTDFBl\n                            bm5zeWx2YW5pYTETMBEGA1UEBxMKUGl0dHNidXJnaDERMA8GA1UEChMIVGVzdFNo\n                            aWIxGTAXBgNVBAMTEGlkcC50ZXN0c2hpYi5vcmeCAQAwDAYDVR0TBAUwAwEB/zAN\n                            BgkqhkiG9w0BAQUFAAOCAQEAjR29PhrCbk8qLN5MFfSVk98t3CT9jHZoYxd8QMRL\n                            I4j7iYQxXiGJTT1FXs1nd4Rha9un+LqTfeMMYqISdDDI6tv8iNpkOAvZZUosVkUo\n                            93pv1T0RPz35hcHHYq2yee59HJOco2bFlcsH8JBXRSRrJ3Q7Eut+z9uo80JdGNJ4\n                            /SJy5UorZ8KazGj16lfJhOBXldgrhppQBb0Nq6HKHguqmwRfJ+WkxemZXzhediAj\n                            Geka8nz8JjwxpUjAiSWYKLtJhGEaTqCYxCCX2Dw+dOTqUzHOZ7WKv4JXPK5G/Uhr\n                            8K/qhmFT2nIQi538n6rVYLeWj8Bbnl+ev0peYzxFyF5sQA==</ds:X509Certificate>\n\t\t\t\t</ds:X509Data>\n\t\t\t</ds:KeyInfo>\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#aes256-cbc\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#aes192-cbc\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#aes128-cbc\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#tripledes-cbc\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p\" />\n\t\t\t<EncryptionMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#rsa-1_5\" />\n\t\t</KeyDescriptor>\n\t\t<AttributeService Binding=\"urn:oasis:names:tc:SAML:1.0:bindings:SOAP-binding\" Location=\"https://idp.testshib.org:8443/idp/profile/SAML1/SOAP/AttributeQuery\" />\n\t\t<AttributeService Binding=\"urn:oasis:names:tc:SAML:2.0:bindings:SOAP\" Location=\"https://idp.testshib.org:8443/idp/profile/SAML2/SOAP/AttributeQuery\" />\n\t\t<NameIDFormat>urn:mace:shibboleth:1.0:nameIdentifier</NameIDFormat>\n\t\t<NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>\n\t</AttributeAuthorityDescriptor>\n\t<Organization>\n\t\t<OrganizationName xml:lang=\"en\">TestShib Two Identity Provider</OrganizationName>\n\t\t<OrganizationDisplayName xml:lang=\"en\">TestShib Two</OrganizationDisplayName>\n\t\t<OrganizationURL xml:lang=\"en\">http://www.testshib.org/testshib-two/</OrganizationURL>\n\t</Organization>\n\t<ContactPerson contactType=\"technical\">\n\t\t<GivenName>Nate</GivenName>\n\t\t<SurName>Klingenstein</SurName>\n\t\t<EmailAddress>ndk@internet2.edu</EmailAddress>\n\t</ContactPerson>\n</EntityDescriptor>"
 
+	/*
+		var values []saml.AttributeValue
+		values = append(values, saml.AttributeValue{
+			NameID: &saml.NameID{
+				Value: "attName",
+			},
+			Value: "Staff",
+		})
+		var attributes []saml.Attribute
+
+		attributes = append(attributes,
+			saml.Attribute{
+				FriendlyName: "eduPersonAffiliation",
+				Name:         "Hello",
+				Values:       values,
+			})
+	*/
+	var attributes []saml.Attribute
+	attributes = append(attributes,
+		saml.Attribute{
+			FriendlyName: "telephoneNumber",
+			Name:         "phone",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "555-5555",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "eduPersonScopedAffiliation",
+			Name:         "scope",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "Member@testshib.org",
+				},
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "Staff@testshib.org",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "SN",
+			Name:         "",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "And I",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "eduPersonEntitlement",
+			Name:         "SN",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "urn:mace:dir:entitlement:common-lib-terms",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "eduPersonTargetID",
+			Name:         "",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "GivenName",
+			Name:         "",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "Me Myself",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "CN",
+			Name:         "",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "Me Myself And I",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "eduPersonAffiliation",
+			Name:         "",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "Member",
+				},
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "Staff",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "UID",
+			Name:         "",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "myself",
+				},
+			},
+		},
+		saml.Attribute{
+			FriendlyName: "eduPersonPrincipalName",
+			Name:         "",
+			Values: []saml.AttributeValue{
+				saml.AttributeValue{
+					NameID: &saml.NameID{
+						Value: "attName",
+					},
+					Value: "myself@testshib.org",
+				},
+			},
+		},
+	)
+
 	test.Middleware = Middleware{
 		ServiceProvider: saml.ServiceProvider{
 			Key:         test.Key,
@@ -71,6 +225,18 @@ func (test *MiddlewareTest) SetUpTest(c *C) {
 		},
 		CookieName:   "ttt",
 		CookieMaxAge: time.Hour * 2,
+		SessionStore: &MockSessionStore{
+			Assertion: &saml.Assertion{
+				AttributeStatement: &saml.AttributeStatement{
+					Attributes: attributes,
+				},
+				Subject: &saml.Subject{
+					NameID: &saml.NameID{
+						Value: "subjectName",
+					},
+				},
+			},
+		},
 	}
 	err := xml.Unmarshal([]byte(test.IDPMetadata), &test.Middleware.ServiceProvider.IDPMetadata)
 	c.Assert(err, IsNil)
@@ -203,7 +369,7 @@ func (test *MiddlewareTest) TestRequireAccountCreds(c *C) {
 	req, _ := http.NewRequest("GET", "/frob", nil)
 	req.Header.Set("Cookie", ""+
 		"ttt="+expectedToken+"; "+
-		"Path=/; Max-Age=7200")
+		"Path=/; Max-Age=7200; session=abcdefg")
 	resp := httptest.NewRecorder()
 	handler.ServeHTTP(resp, req)
 
@@ -289,7 +455,7 @@ func (test *MiddlewareTest) TestRejectRequestWithMagicHeader(c *C) {
 	req, _ := http.NewRequest("GET", "/frob", nil)
 	req.Header.Set("Cookie", ""+
 		"ttt="+expectedToken+"; "+
-		"Path=/; Max-Age=7200")
+		"Path=/; Max-Age=7200; session=abcdefg")
 	req.Header.Set("X-Saml-Uid", "root") // ... evil
 	resp := httptest.NewRecorder()
 	c.Assert(func() { handler.ServeHTTP(resp, req) }, Panics,
@@ -306,7 +472,7 @@ func (test *MiddlewareTest) TestRequireAttribute(c *C) {
 	req, _ := http.NewRequest("GET", "/frob", nil)
 	req.Header.Set("Cookie", ""+
 		"ttt="+expectedToken+"; "+
-		"Path=/; Max-Age=7200")
+		"Path=/; Max-Age=7200; session=abcdefg")
 	resp := httptest.NewRecorder()
 	handler.ServeHTTP(resp, req)
 
@@ -323,7 +489,7 @@ func (test *MiddlewareTest) TestRequireAttributeWrongValue(c *C) {
 	req, _ := http.NewRequest("GET", "/frob", nil)
 	req.Header.Set("Cookie", ""+
 		"ttt="+expectedToken+"; "+
-		"Path=/; Max-Age=7200")
+		"Path=/; Max-Age=7200; session=abcdefg;")
 	resp := httptest.NewRecorder()
 	handler.ServeHTTP(resp, req)
 
@@ -417,4 +583,17 @@ func (test *MiddlewareTest) TestHandlesInvalidResponse(c *C) {
 	c.Assert(string(respBody), Equals, "Forbidden\n")
 	c.Assert(resp.Header().Get("Location"), Equals, "")
 	c.Assert(resp.Header().Get("Set-Cookie"), Equals, "")
+}
+
+type MockSessionStore struct {
+	Assertion *saml.Assertion
+}
+
+func (m *MockSessionStore) Get(key string) *saml.Assertion {
+	fmt.Printf("GETTING FROM SESSION: %s\n", key)
+	return m.Assertion
+}
+
+func (m *MockSessionStore) Set(key string, assertion *saml.Assertion) {
+	m.Assertion = assertion
 }

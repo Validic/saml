@@ -201,7 +201,6 @@ func (m *Middleware) getPossibleRequestIDs(r *http.Request) []string {
 		if !strings.HasPrefix(cookie.Name, "saml_") {
 			continue
 		}
-		log.Printf("getPossibleRequestIDs: cookie: %s", cookie.String())
 		token, err := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
 			secretBlock, _ := pem.Decode([]byte(m.ServiceProvider.Key))
 			return secretBlock.Bytes, nil
@@ -313,7 +312,7 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 	})
 
 	if sessionStore != nil {
-		sessionStore.Set(token, *assertion)
+		sessionStore.Set(token, assertion)
 	}
 
 	http.Redirect(w, r, redirectURI, http.StatusFound)
@@ -331,29 +330,41 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 // It is an error for this function to be invoked with a request containing
 // any headers starting with X-Saml. This function will panic if you do.
 func (m *Middleware) IsAuthorized(r *http.Request) bool {
-	cookie, err := r.Cookie(m.CookieName)
+	cookie, err := r.Cookie("session")
 	if err != nil {
 		return false
 	}
 
-	//TODO look up my Assertion in the session store based on cookie value, instead of parsing from a JWT cookie
-	tokenClaims := TokenClaims{}
-	token, err := jwt.ParseWithClaims(cookie.Value, &tokenClaims, func(t *jwt.Token) (interface{}, error) {
-		secretBlock, _ := pem.Decode([]byte(m.ServiceProvider.Key))
-		return secretBlock.Bytes, nil
-	})
-	if err != nil || !token.Valid {
-		log.Printf("ERROR: invalid token: %s", err)
+	assertion := m.SessionStore.Get(cookie.Value)
+
+	if assertion == nil {
 		return false
 	}
-	if err := tokenClaims.StandardClaims.Valid(); err != nil {
-		log.Printf("ERROR: invalid token claims: %s", err)
-		return false
-	}
-	if tokenClaims.Audience != m.ServiceProvider.Metadata().EntityID {
-		log.Printf("ERROR: invalid audience: %s", err)
-		return false
-	}
+	/*
+		cookie, err := r.Cookie(m.CookieName)
+		if err != nil {
+			return false
+		}
+
+		//TODO look up my Assertion in the session store based on cookie value, instead of parsing from a JWT cookie
+		tokenClaims := TokenClaims{}
+		token, err := jwt.ParseWithClaims(cookie.Value, &tokenClaims, func(t *jwt.Token) (interface{}, error) {
+			secretBlock, _ := pem.Decode([]byte(m.ServiceProvider.Key))
+			return secretBlock.Bytes, nil
+		})
+		if err != nil || !token.Valid {
+			log.Printf("ERROR: invalid token: %s", err)
+			return false
+		}
+		if err := tokenClaims.StandardClaims.Valid(); err != nil {
+			log.Printf("ERROR: invalid token claims: %s", err)
+			return false
+		}
+		if tokenClaims.Audience != m.ServiceProvider.Metadata().EntityID {
+			log.Printf("ERROR: invalid audience: %s", err)
+			return false
+		}
+	*/
 
 	// It is an error for the request to include any X-SAML* headers,
 	// because those might be confused with ours. If we encounter any
@@ -364,17 +375,21 @@ func (m *Middleware) IsAuthorized(r *http.Request) bool {
 		}
 	}
 
-	/*
-		TODO given the assertion we pulled from Session above, iterate over assertion.AttributeStatement.Attributes
-		assertion := saml.Assertion{}
-		assertion.AttributeStatement.Attributes
-	*/
-	for claimName, claimValues := range tokenClaims.Attributes {
-		for _, claimValue := range claimValues {
-			r.Header.Add("X-Saml-"+claimName, claimValue)
+	for _, attValue := range assertion.AttributeStatement.Attributes {
+		for _, value := range attValue.Values {
+			r.Header.Add("X-Saml-"+attValue.FriendlyName, value.Value)
 		}
+
 	}
-	r.Header.Set("X-Saml-Subject", tokenClaims.Subject)
+	/*
+		for claimName, claimValues := range tokenClaims.Attributes {
+			for _, claimValue := range claimValues {
+				r.Header.Add("X-Saml-"+claimName, claimValue)
+			}
+		}
+	*/
+	//r.Header.Set("X-Saml-Subject", tokenClaims.Subject)
+	r.Header.Set("X-Saml-Subject", assertion.Subject.NameID.Value)
 
 	return true
 }
@@ -395,6 +410,7 @@ func RequireAttribute(name, value string) func(http.Handler) http.Handler {
 			if values, ok := r.Header[http.CanonicalHeaderKey(fmt.Sprintf("X-Saml-%s", name))]; ok {
 				for _, actualValue := range values {
 					if actualValue == value {
+
 						handler.ServeHTTP(w, r)
 						return
 					}

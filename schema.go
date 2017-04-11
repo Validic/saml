@@ -392,6 +392,6 @@ type AttributeValue struct {
 }
 
 type SessionStore interface {
-	Set(key string, assertion Assertion)
-	Get(key string) Assertion
+	Set(key string, assertion *Assertion)
+	Get(key string) *Assertion
 }
