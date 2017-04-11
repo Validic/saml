@@ -22,6 +22,7 @@ type Options struct {
 	IDPMetadata       *saml.Metadata
 	IDPMetadataURL    string
 	SessionStore      saml.SessionStore
+	LogoutURL         string
 }
 
 // New creates a new Middleware
@@ -36,6 +37,7 @@ func New(opts Options) (*Middleware, error) {
 		},
 		AllowIDPInitiated: opts.AllowIDPInitiated,
 		CookieName:        defaultCookieName,
+		LogoutURL:         opts.LogoutURL,
 		CookieMaxAge:      defaultCookieMaxAge,
 		SessionStore:      opts.SessionStore,
 	}

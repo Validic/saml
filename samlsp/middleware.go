@@ -55,6 +55,7 @@ type Middleware struct {
 	ServiceProvider   saml.ServiceProvider
 	AllowIDPInitiated bool
 	CookieName        string
+	LogoutURL         string
 	CookieMaxAge      time.Duration
 	SessionStore      saml.SessionStore
 }
@@ -316,6 +317,26 @@ func (m *Middleware) Authorize(w http.ResponseWriter, r *http.Request, assertion
 	}
 
 	http.Redirect(w, r, redirectURI, http.StatusFound)
+}
+
+// first stab at logout flow
+func (m *Middleware) Unauthorize(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest) //correct error status?
+		return
+	}
+
+	// remove cookie from browser
+	cookie.MaxAge = -1
+	http.SetCookie(w, cookie)
+
+	// delete assertion from store
+	id := cookie.Value
+	m.SessionStore.Delete(id)
+
+	// redirect to logout page
+	http.Redirect(w, r, m.LogoutURL, http.StatusFound)
 }
 
 // IsAuthorized is invoked by RequireAccount to determine if the request
